@@ -1,4 +1,33 @@
 <?php
+
+/**
+ * -------------------------------------------------------------------------
+ * Escalade plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Escalade.
+ *
+ * Escalade is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Escalade is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Escalade. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2015-2022 by Escalade plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/escalade
+ * -------------------------------------------------------------------------
+ */
+
 if (!defined('GLPI_ROOT')) {
    die("Sorry. You can't access directly to this file");
 }
@@ -247,7 +276,7 @@ class PluginEscaladeTicket {
       $history->add([
          'tickets_id'         => $tickets_id,
          'groups_id'          => $groups_id,
-         'previous_groups_id' => $previous_groups_id,
+         'groups_id_previous' => $previous_groups_id,
          'counter'            => $counter
       ]);
 
@@ -325,8 +354,7 @@ class PluginEscaladeTicket {
       }
 
       //check plugin behaviors (for avoid conflict)
-      $plugin = new Plugin();
-      if ($plugin->isInstalled('behaviors') && $plugin->isActivated('behaviors')) {
+      if (Plugin::isPluginActive('behaviors')) {
          $behavior_config = PluginBehaviorsConfig::getInstance();
          if ($behavior_config->getField('use_assign_user_group') != 0) {
             return false;
@@ -764,4 +792,42 @@ class PluginEscaladeTicket {
          ]);
       }
    }
+
+    static function filter_actors(array $params = []): array {
+        $itemtype = $params['params']['itemtype'];
+        $items_id = $params['params']['items_id'];
+
+        if ($itemtype == 'Ticket' && $params['params']['actortype'] == 'assign') {
+            // find filtered groups
+            $PluginEscaladeGroup_Group = new PluginEscaladeGroup_Group();
+            $groups_id_filtred = $PluginEscaladeGroup_Group->getGroups($items_id);
+            $groups_id_filtred = array_keys($groups_id_filtred);
+
+            foreach ($params['actors'] as $index => &$actor) {
+                //remove groups in children nodes
+                if (isset($actor['children'])) {
+                    foreach ($actor['children'] as $index_child => &$child) {
+                        if ($child['itemtype'] == "Group" && !in_array($child['items_id'], $groups_id_filtred)) {
+                            unset($actor['children'][$index_child]);
+                        }
+                    }
+
+                    if (count($actor['children']) > 0) {
+                        // reindex correctly children (to avoid select2 fails)
+                        $actor['children'] = array_values($actor['children']);
+                    } else {
+                        // otherwise remove empty parent
+                        unset($params['actors'][$index]);
+                    }
+                } else {
+                    // remove direct groups (don't sure this exists)
+                    if ($actor['itemtype'] == "Group" && !in_array($actor['items_id'], $groups_id_filtred)) {
+                        unset($params['actors'][$index]);
+                    }
+                }
+            }
+        }
+
+       return $params;
+    }
 }

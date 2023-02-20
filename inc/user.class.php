@@ -1,36 +1,32 @@
 <?php
+
 /**
- -------------------------------------------------------------------------
-
- LICENSE
-
- This file is part of Behaviors plugin for GLPI.
-
- Behaviors is free software: you can redistribute it and/or modify
- it under the terms of the GNU Affero General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- Behaviors is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU Affero General Public License for more details.
-
- You should have received a copy of the GNU Affero General Public License
- along with Behaviors. If not, see <http://www.gnu.org/licenses/>.
-
- @package   behaviors
- @author    Remi Collet
- @copyright Copyright (c) 2010-2011 Behaviors plugin team
- @license   AGPL License 3.0 or (at your option) any later version
-            http://www.gnu.org/licenses/agpl-3.0-standalone.html
- @link      https://forge.indepnet.net/projects/behaviors
- @link      http://www.glpi-project.org/
- @since     2010
-
- @modified Alexandre Delaunay for re-use in escalade plugin (2013-01)
- --------------------------------------------------------------------------
-*/
+ * -------------------------------------------------------------------------
+ * Escalade plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Escalade.
+ *
+ * Escalade is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Escalade is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Escalade. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2015-2022 by Escalade plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/escalade
+ * -------------------------------------------------------------------------
+ */
 
 class PluginEscaladeUser extends CommonDBTM {
 
@@ -40,7 +36,7 @@ class PluginEscaladeUser extends CommonDBTM {
     * @see CommonDBTM::showMassiveActionsSubForm()
    **/
    static function showMassiveActionsSubForm(MassiveAction $ma) {
-      switch ($ma->action) {
+      switch ($ma->getAction()) {
          case "use_filter_assign_group" :
             Dropdown::showYesNo("use_filter_assign_group", 0, -1, [
                'width' => '100%',
@@ -111,7 +107,7 @@ class PluginEscaladeUser extends CommonDBTM {
       return self::getUserGroup($entity, $userid, '`is_assign`', $first);
    }
 
-   function showForm($ID) {
+   function showForm($ID, array $options = []) {
 
       $is_exist = $this->getFromDBByCrit(['users_id' => $ID]);
 

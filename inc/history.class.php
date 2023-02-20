@@ -1,4 +1,33 @@
 <?php
+
+/**
+ * -------------------------------------------------------------------------
+ * Escalade plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Escalade.
+ *
+ * Escalade is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Escalade is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Escalade. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2015-2022 by Escalade plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/escalade
+ * -------------------------------------------------------------------------
+ */
+
 if (!defined('GLPI_ROOT')) {
    die("Sorry. You can't access directly to this file");
 }
@@ -32,7 +61,7 @@ class PluginEscaladeHistory extends CommonDBTM {
                                                  [
                                                    'tickets_id' => $tickets_id,
                                                    'groups_id' => [$groups_id, $previous_groups_id],
-                                                   'previous_groups_id' => [$groups_id, $previous_groups_id]
+                                                   'groups_id_previous' => [$groups_id, $previous_groups_id]
                                                  ]
                                                ]);
 
@@ -92,13 +121,13 @@ class PluginEscaladeHistory extends CommonDBTM {
             if ($full_history) {
                echo "&full_history=true";
             }
-             echo "' title='".__("Reassign the ticket to group", "escalade")."' class='up_a'></a>";
+             echo "' title='".__("Reassign the ticket to group", "escalade")."' class='btn btn-icon btn-sm btn-ghost-secondary'><i class='ti ti-arrow-up'></i></a>";
          } else {
             echo "&nbsp;&nbsp;&nbsp;";
          }
 
          //group link
-         echo "&nbsp;<i class='fas fa-users'></i>&nbsp;";
+         echo "&nbsp;<i class='ti ti-users'></i>&nbsp;";
          if ($group->getFromDB($hline['groups_id'])) {
             echo self::showGroupLink($group, $full_history);
          }
@@ -240,8 +269,13 @@ class PluginEscaladeHistory extends CommonDBTM {
          $options['criteria'][2]['value']      = 'mygroups';
          $options['criteria'][2]['link']       = 'AND';
 
-         echo "<table class='tab_cadrehov' id='pluginEscaladeCentralList'>";
-         echo "<tr><th colspan='5'>";
+         echo "<div class='grid-item col-xl-6 escalade-appended'><div class='card'>";
+         echo "<div class='card-body p-0'>";
+         echo "<div class='lazy-widget' data-itemtype='Ticket' data-widget='central_list'>";
+         echo "<div class='table-responsive card-table'>";
+         echo "<table class='table table-borderless table-striped table-hover card-table'>";
+         echo "<thead>";
+         echo "<tr><th colspan='4'>";
          echo "<a href=\"".$CFG_GLPI["root_doc"]."/front/ticket.php?".
                          Toolbox::append_params($options, '&amp;')."\">".
                          Html::makeTitle($title, $number, $numrows)."</a>";
@@ -252,14 +286,18 @@ class PluginEscaladeHistory extends CommonDBTM {
             echo "<th></th>";
             echo "<th>".__('Requester')."</th>";
             echo "<th>".__('Associated element')."</th>";
-            echo "<th>".__('Description')."</th></tr>";
+            echo "<th>".__('Description')."</th></tr></thead>";
             for ($i = 0; $i < $number; $i++) {
                $ID = $DB->result($result, $i, "id");
                Ticket::showVeryShort($ID, 'Ticket$2');
             }
          }
          echo "</table>";
-         echo "<br />";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
       }
    }
 }

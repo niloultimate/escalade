@@ -1,37 +1,41 @@
 <?php
-/*
- -------------------------------------------------------------------------
- Escalade plugin for GLPI
- Copyright (C) 2016-207 by the Escalade Development Team.
 
- https://github.com/pluginsGLPI/escalade
- -------------------------------------------------------------------------
-
- LICENSE
-
- This file is part of Escalade.
-
- Escalade is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- Escalade is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with Escalade. If not, see <http://www.gnu.org/licenses/>.
- --------------------------------------------------------------------------
+/**
+ * -------------------------------------------------------------------------
+ * Escalade plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Escalade.
+ *
+ * Escalade is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Escalade is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Escalade. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2015-2022 by Escalade plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/escalade
+ * -------------------------------------------------------------------------
  */
 
-define ('PLUGIN_ESCALADE_VERSION', '2.7.1');
+use Glpi\Plugin\Hooks;
+
+define ('PLUGIN_ESCALADE_VERSION', '2.8.2');
 
 // Minimal GLPI version, inclusive
-define("PLUGIN_ESCALADE_MIN_GLPI", "9.5");
+define("PLUGIN_ESCALADE_MIN_GLPI", "10.0.0");
 // Maximum GLPI version, exclusive
-define("PLUGIN_ESCALADE_MAX_GLPI", "9.6");
+define("PLUGIN_ESCALADE_MAX_GLPI", "10.0.99");
 
 /**
  * Init hooks of the plugin.
@@ -44,10 +48,7 @@ function plugin_init_escalade() {
 
    $PLUGIN_HOOKS['csrf_compliant']['escalade'] = true;
 
-   $plugin = new Plugin();
-   if ((isset($_SESSION['glpiID']) || isCommandLine())
-      && $plugin->isInstalled('escalade')
-      && $plugin->isActivated('escalade')) {
+   if ((isset($_SESSION['glpiID']) || isCommandLine()) && Plugin::isPluginActive('escalade')) {
 
       //load config in session
       if ($DB->tableExists("glpi_plugin_escalade_configs")) {
@@ -60,7 +61,7 @@ function plugin_init_escalade() {
             $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/function.js';
 
             // on central page
-            if (strpos($_SERVER['REQUEST_URI'], "central.php") !== false) {
+            if (strpos($_SERVER['REQUEST_URI'] ?? '', "central.php") !== false) {
                //history and climb feature
                if ($escalade_config['show_history']) {
                   $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/central.js.php';
@@ -68,9 +69,9 @@ function plugin_init_escalade() {
             }
 
             // on ticket page (in edition)
-            if ((strpos($_SERVER['REQUEST_URI'], "ticket.form.php") !== false
-               || strpos($_SERVER['REQUEST_URI'], "problem.form.php") !== false
-               || strpos($_SERVER['REQUEST_URI'], "change.form.php") !== false) && isset($_GET['id'])) {
+            if ((strpos($_SERVER['REQUEST_URI'] ?? '', "ticket.form.php") !== false
+               || strpos($_SERVER['REQUEST_URI'] ?? '', "problem.form.php") !== false
+               || strpos($_SERVER['REQUEST_URI'] ?? '', "change.form.php") !== false) && isset($_GET['id'])) {
 
                if (!$escalade_config['remove_delete_requester_user_btn']
                   || !$escalade_config['remove_delete_watcher_user_btn']
@@ -85,7 +86,7 @@ function plugin_init_escalade() {
             }
 
             // on ticket page (in edition)
-            if (strpos($_SERVER['REQUEST_URI'], "ticket.form.php") !== false
+            if (strpos($_SERVER['REQUEST_URI'] ?? '', "ticket.form.php") !== false
                 && isset($_GET['id'])) {
 
                //history and climb feature
@@ -96,11 +97,6 @@ function plugin_init_escalade() {
                //clone ticket feature
                if ($escalade_config['cloneandlink_ticket']) {
                   $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/cloneandlink_ticket.js.php';
-               }
-
-               //filter group feature
-               if ($escalade_config['use_filter_assign_group']) {
-                  $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/filtergroup.js.php';
                }
             }
 
@@ -136,6 +132,13 @@ function plugin_init_escalade() {
          'Ticket'       => 'plugin_escalade_item_purge',
       ];
       $PLUGIN_HOOKS['item_add']['escalade']['User'] = 'plugin_escalade_item_add_user';
+
+       //filter group feature
+       if ($escalade_config['use_filter_assign_group']) {
+          $PLUGIN_HOOKS[Hooks::FILTER_ACTORS]['escalade'] = [
+             'PluginEscaladeTicket', 'filter_actors',
+          ];
+       }
 
       // == Interface links ==
       if (Session::haveRight('config', UPDATE)) {

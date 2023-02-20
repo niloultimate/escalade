@@ -1,4 +1,33 @@
 <?php
+
+/**
+ * -------------------------------------------------------------------------
+ * Escalade plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Escalade.
+ *
+ * Escalade is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Escalade is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Escalade. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2015-2022 by Escalade plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/escalade
+ * -------------------------------------------------------------------------
+ */
+
 include ("../../../inc/includes.php");
 
 //change mimetype
@@ -26,12 +55,12 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
       //delay the execution (ajax requestcomplete event fired before dom loading)
       setTimeout( function () {
          if ($("#cloneandlink_ticket").length > 0) { return; }
-         var duplicate_html = "&nbsp;<img src='"+plugin_url+"/pics/cloneandlink_ticket.png' "+
-            "alt='$locale_cloneandlink' " +
-            "title='$locale_cloneandlink' class='pointer' id='cloneandlink_ticket'>";
+         var duplicate_html = "<button id='cloneandlink_ticket' class='btn btn-sm btn-ghost-secondary ms-auto'"+
+                "title='$locale_cloneandlink'><i class='ti ti-copy me-1'></i>" + __("Clone") +
+            "</button>";
 
-         $("th:contains('$locale_linkedtickets')>span.fa")
-            .after(duplicate_html);
+         $("#linked_tickets-heading .accordion-button")
+            .append(duplicate_html);
          addOnclick();
 
       }, 100);
@@ -61,7 +90,7 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
       });
    }
 
-   $(document).ajaxStop(function() {
+   $(document).on('glpi.tab.loaded', function() {
       addCloneLink();
    });
 
